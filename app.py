@@ -199,12 +199,7 @@ def get_emails():
 
             msg = service.users().messages().get(
                 userId='me',
-                id=message['id'],
-                format='metadata',
-                metadataHeaders=[
-                    'Subject',
-                    'From'
-                ]
+                id=message['id']
             ).execute()
 
             payload = msg['payload']
