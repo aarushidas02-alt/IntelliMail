@@ -45,7 +45,7 @@ function Inbox() {
   // FETCH EMAILS
   const fetchEmails = (pageToken = null) => {
 
-    let url = "http://127.0.0.1:5000/emails";
+    let url = "https://intellimail-y86b.onrender.com/emails";
 
     if (pageToken) {
 
@@ -120,7 +120,7 @@ function Inbox() {
     setLoadingEmail(true);
 
     fetch(
-      `http://127.0.0.1:5000/email/${email.id}`
+      `https://intellimail-y86b.onrender.com/email/${email.id}`
     )
 
       .then((res) => res.json())
