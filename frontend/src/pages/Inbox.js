@@ -20,18 +20,22 @@ function Inbox() {
   const [loadingEmail, setLoadingEmail] =
     useState(false);
 
+  // GET TOKEN
+  const gmailToken =
+    localStorage.getItem("gmail_token");
+
   // CATEGORY BACKGROUND COLORS
   const categoryBackgrounds = {
 
-    social: "rgba(139,92,246,0.12)",
+    social: "rgba(139,92,246,0.28)",
 
-    promotions: "rgba(249,115,22,0.12)",
+    promotions: "rgba(249,115,22,0.28)",
 
-    education: "rgba(6,182,212,0.12)",
+    education: "rgba(6,182,212,0.28)",
 
-    banking: "rgba(34,197,94,0.12)",
+    banking: "rgba(34,197,94,0.28)",
 
-    spam: "rgba(239,68,68,0.12)"
+    spam: "rgba(239,68,68,0.28)"
 
   };
 
@@ -45,7 +49,8 @@ function Inbox() {
   // FETCH EMAILS
   const fetchEmails = (pageToken = null) => {
 
-    let url = "https://intellimail-y86b.onrender.com/emails";
+    let url =
+      "https://intellimail-y86b.onrender.com/emails";
 
     if (pageToken) {
 
@@ -53,7 +58,16 @@ function Inbox() {
 
     }
 
-    fetch(url)
+    fetch(url, {
+
+      headers: {
+
+        Authorization:
+          `Bearer ${gmailToken}`
+
+      }
+
+    })
 
       .then((res) => res.json())
 
@@ -120,7 +134,17 @@ function Inbox() {
     setLoadingEmail(true);
 
     fetch(
-      `https://intellimail-y86b.onrender.com/email/${email.id}`
+      `https://intellimail-y86b.onrender.com/email/${email.id}`,
+      {
+
+        headers: {
+
+          Authorization:
+            `Bearer ${gmailToken}`
+
+        }
+
+      }
     )
 
       .then((res) => res.json())
@@ -148,8 +172,11 @@ function Inbox() {
   // LOGOUT
   const logout = () => {
 
-    window.location.href =
-      "https://dashboard.render.com/web/srv-d89ht30jo6nc73ds602g/deploys/dep-d89ht30jo6nc73ds6070?r=2026-05-24%4015%3A50%3A40%7E2026-05-24%4015%3A56%3A32";
+    localStorage.removeItem(
+      "gmail_token"
+    );
+
+    window.location.href = "/";
 
   };
 

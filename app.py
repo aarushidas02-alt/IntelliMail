@@ -1,7 +1,3 @@
-from google_auth_oauthlib.flow import Flow
-
-from flask import redirect
-
 from flask import Flask, jsonify, request
 
 from flask_cors import CORS
@@ -15,7 +11,6 @@ from spam import (
     predict_confidence
 )
 
-import os
 import base64
 import re
 
@@ -27,10 +22,6 @@ CORS(app)
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly'
 ]
-
-CLIENT_SECRETS_FILE = "credentials.json"
-
-REDIRECT_URI = "https://intellimail-y86b.onrender.com/oauth2callback"
 
 
 # CLEAN HTML TAGS
@@ -137,45 +128,6 @@ def extract_body(payload):
     return body
 
 
-@app.route('/login')
-def login():
-
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        redirect_uri=REDIRECT_URI
-    )
-
-    auth_url, state = flow.authorization_url(
-        access_type='offline',
-        include_granted_scopes='true'
-    )
-
-    return redirect(auth_url)
-
-
-@app.route('/oauth2callback')
-def oauth2callback():
-
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        redirect_uri=REDIRECT_URI
-    )
-
-    flow.fetch_token(
-        authorization_response=request.url
-    )
-
-    creds = flow.credentials
-
-    with open('token.json', 'w') as token:
-        token.write(creds.to_json())
-
-    return jsonify({
-        "message": "Authentication successful"
-    })
-
 # FETCH EMAILS WITH PAGINATION
 @app.route('/emails', methods=['GET'])
 def get_emails():
@@ -186,14 +138,23 @@ def get_emails():
             'pageToken'
         )
 
-        if not os.path.exists('token.json'):
+        auth_header = request.headers.get(
+            "Authorization"
+        )
+
+        if not auth_header:
+
             return jsonify({
-                "error": "No authentication token found. Please login again."
+                "error":
+                    "No authorization header found"
             }), 401
 
-        creds = Credentials.from_authorized_user_file(
-            'token.json',
-            SCOPES
+        token = auth_header.split(
+            " "
+        )[1]
+
+        creds = Credentials(
+            token=token
         )
 
         service = build(
@@ -355,15 +316,24 @@ def get_single_email(email_id):
 
     try:
 
-        if not os.path.exists('token.json'):
-                return jsonify({
-                    "error": "No authentication token found. Please login again."
-                }), 401
+        auth_header = request.headers.get(
+            "Authorization"
+        )
 
-        creds = Credentials.from_authorized_user_file(
-                'token.json',
-                SCOPES
-            )
+        if not auth_header:
+
+            return jsonify({
+                "error":
+                    "No authorization header found"
+            }), 401
+
+        token = auth_header.split(
+            " "
+        )[1]
+
+        creds = Credentials(
+            token=token
+        )
 
         service = build(
             'gmail',
