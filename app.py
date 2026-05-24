@@ -1,9 +1,6 @@
 from flask import Flask, jsonify, request
-
 from flask_cors import CORS
-
 from google.oauth2.credentials import Credentials
-
 from googleapiclient.discovery import build
 
 from spam import (
@@ -14,7 +11,6 @@ from spam import (
 import base64
 import re
 
-
 app = Flask(__name__)
 
 CORS(app)
@@ -24,7 +20,7 @@ SCOPES = [
 ]
 
 
-# CLEAN HTML TAGS
+# CLEAN HTML
 def clean_html(raw_html):
 
     clean_text = re.sub(
@@ -41,7 +37,6 @@ def extract_body(payload):
 
     body = ""
 
-    # DIRECT BODY
     if 'body' in payload:
 
         data = payload['body'].get('data')
@@ -63,7 +58,6 @@ def extract_body(payload):
 
                 pass
 
-    # PARTS
     parts = payload.get('parts')
 
     if parts:
@@ -72,7 +66,6 @@ def extract_body(payload):
 
             mime = part.get('mimeType')
 
-            # PLAIN TEXT
             if mime == 'text/plain':
 
                 data = part['body'].get('data')
@@ -94,7 +87,6 @@ def extract_body(payload):
 
                         pass
 
-            # HTML EMAIL
             elif mime == 'text/html':
 
                 data = part['body'].get('data')
@@ -116,7 +108,6 @@ def extract_body(payload):
 
                         pass
 
-            # NESTED PARTS
             elif part.get('parts'):
 
                 nested_body = extract_body(part)
@@ -128,33 +119,54 @@ def extract_body(payload):
     return body
 
 
-# FETCH EMAILS WITH PAGINATION
-@app.route('/emails', methods=['GET'])
-def get_emails():
+# GET TOKEN FROM HEADER
+def get_credentials():
+
+    auth_header = request.headers.get(
+        "Authorization"
+    )
+
+    if not auth_header:
+
+        return None, jsonify({
+            "error":
+                "No authorization header found"
+        }), 401
 
     try:
-
-        page_token = request.args.get(
-            'pageToken'
-        )
-
-        auth_header = request.headers.get(
-            "Authorization"
-        )
-
-        if not auth_header:
-
-            return jsonify({
-                "error":
-                    "No authorization header found"
-            }), 401
 
         token = auth_header.split(
             " "
         )[1]
 
-        creds = Credentials(
-            token=token
+    except:
+
+        return None, jsonify({
+            "error":
+                "Invalid authorization format"
+        }), 401
+
+    creds = Credentials(
+        token=token
+    )
+
+    return creds, None, None
+
+
+# FETCH EMAILS
+@app.route('/emails', methods=['GET'])
+def get_emails():
+
+    try:
+
+        creds, error_response, status = get_credentials()
+
+        if error_response:
+
+            return error_response, status
+
+        page_token = request.args.get(
+            'pageToken'
         )
 
         service = build(
@@ -163,7 +175,6 @@ def get_emails():
             credentials=creds
         )
 
-        # LIGHTWEIGHT FETCH
         results = service.users().messages().list(
             userId='me',
             maxResults=15,
@@ -184,7 +195,6 @@ def get_emails():
 
         for message in messages:
 
-            # FAST METADATA FETCH
             msg = service.users().messages().get(
                 userId='me',
                 id=message['id'],
@@ -206,7 +216,6 @@ def get_emails():
 
             sender = "Unknown Sender"
 
-            # SUBJECT + SENDER
             for header in headers:
 
                 if header['name'] == 'Subject':
@@ -217,45 +226,38 @@ def get_emails():
 
                     sender = header['value']
 
-            # USE GMAIL SNIPPET
             snippet = msg.get(
                 'snippet',
                 'No Preview Available'
             )
 
-            # FULL TEXT
             full_text = (
                 subject +
                 " " +
                 snippet
             )
 
-            # GMAIL LABELS
             label_ids = msg.get(
                 'labelIds',
                 []
             )
 
-            # DEFAULT
             category = "general"
 
             confidence = 85
 
-            # GMAIL SOCIAL
             if 'CATEGORY_SOCIAL' in label_ids:
 
                 category = "social"
 
                 confidence = 99
 
-            # GMAIL PROMOTIONS
             elif 'CATEGORY_PROMOTIONS' in label_ids:
 
                 category = "promotions"
 
                 confidence = 99
 
-            # HYBRID SPAM
             elif 'SPAM' in label_ids:
 
                 category = "spam"
@@ -274,30 +276,21 @@ def get_emails():
 
                 category = ml_category
 
-            # STORE EMAIL
             email_data.append({
 
                 "id": message['id'],
-
                 "subject": subject,
-
                 "sender": sender,
-
                 "snippet": snippet,
-
                 "category": category,
-
-                "confidence":
-                    str(confidence) + "%"
+                "confidence": str(confidence) + "%"
 
             })
 
         return jsonify({
 
             "emails": email_data,
-
-            "nextPageToken":
-                next_page_token
+            "nextPageToken": next_page_token
 
         })
 
@@ -307,33 +300,20 @@ def get_emails():
 
             "error": str(e)
 
-        })
+        }), 500
 
 
-# FETCH FULL EMAIL ON CLICK
+# FETCH SINGLE EMAIL
 @app.route('/email/<email_id>', methods=['GET'])
 def get_single_email(email_id):
 
     try:
 
-        auth_header = request.headers.get(
-            "Authorization"
-        )
+        creds, error_response, status = get_credentials()
 
-        if not auth_header:
+        if error_response:
 
-            return jsonify({
-                "error":
-                    "No authorization header found"
-            }), 401
-
-        token = auth_header.split(
-            " "
-        )[1]
-
-        creds = Credentials(
-            token=token
-        )
+            return error_response, status
 
         service = build(
             'gmail',
@@ -392,15 +372,10 @@ def get_single_email(email_id):
         return jsonify({
 
             "subject": subject,
-
             "sender": sender,
-
             "body": body,
-
             "category": category,
-
-            "confidence":
-                str(confidence) + "%"
+            "confidence": str(confidence) + "%"
 
         })
 
@@ -410,10 +385,10 @@ def get_single_email(email_id):
 
             "error": str(e)
 
-        })
+        }), 500
 
 
-# MANUAL EMAIL ANALYSIS
+# MANUAL ANALYSIS
 @app.route('/analyze', methods=['POST'])
 def analyze_email():
 
@@ -434,9 +409,7 @@ def analyze_email():
         return jsonify({
 
             "prediction": category,
-
-            "confidence":
-                str(confidence) + "%"
+            "confidence": str(confidence) + "%"
 
         })
 
@@ -446,10 +419,10 @@ def analyze_email():
 
             "error": str(e)
 
-        })
+        }), 500
 
 
-# HOME ROUTE
+# HOME
 @app.route('/')
 def home():
 
@@ -467,9 +440,7 @@ if __name__ == '__main__':
     app.run(
 
         host='0.0.0.0',
-
         port=5000,
-
         debug=True
 
     )

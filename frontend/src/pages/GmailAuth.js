@@ -4,9 +4,15 @@ import { motion } from "framer-motion";
 
 import { useNavigate } from "react-router-dom";
 
-import { signInWithPopup } from "firebase/auth";
+import {
+  signInWithPopup,
+  GoogleAuthProvider
+} from "firebase/auth";
 
-import { auth, provider } from "../firebase";
+import {
+  auth,
+  provider
+} from "../firebase";
 
 function GmailAuth() {
 
@@ -19,7 +25,6 @@ function GmailAuth() {
     useState("");
 
   // GOOGLE LOGIN
-
   const handleGoogleLogin = async () => {
 
     try {
@@ -34,7 +39,29 @@ function GmailAuth() {
           provider
         );
 
-      console.log(result.user);
+      // GET GOOGLE ACCESS TOKEN
+      const credential =
+        GoogleAuthProvider.credentialFromResult(
+          result
+        );
+
+      const token =
+        credential.accessToken;
+
+      // STORE TOKEN
+      localStorage.setItem(
+        "gmail_token",
+        token
+      );
+
+      console.log(
+        "Access Token:",
+        token
+      );
+
+      console.log(
+        result.user
+      );
 
       setTimeout(() => {
 
