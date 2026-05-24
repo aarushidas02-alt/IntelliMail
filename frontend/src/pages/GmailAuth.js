@@ -14,6 +14,10 @@ import {
   provider
 } from "../firebase";
 
+provider.addScope(
+  "https://www.googleapis.com/auth/gmail.readonly"
+);
+
 function GmailAuth() {
 
   const navigate = useNavigate();
