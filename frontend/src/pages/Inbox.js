@@ -1,4 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback
+} from "react";
+
 import { motion } from "framer-motion";
 
 function Inbox() {
@@ -39,15 +44,8 @@ function Inbox() {
 
   };
 
-  // INITIAL FETCH
-  useEffect(() => {
-
-    fetchEmails();
-
-  }, []);
-
   // FETCH EMAILS
-  const fetchEmails = (pageToken = null) => {
+  const fetchEmails = useCallback((pageToken = null) => {
 
     let url =
       "https://intellimail-y86b.onrender.com/emails";
@@ -109,7 +107,14 @@ function Inbox() {
 
       });
 
-  };
+  }, [gmailToken]);
+
+  // INITIAL FETCH
+  useEffect(() => {
+
+    fetchEmails();
+
+  }, [fetchEmails]);
 
   // LOAD MORE
   const loadMoreEmails = () => {
