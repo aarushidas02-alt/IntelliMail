@@ -149,7 +149,7 @@ function Inbox() {
   const logout = () => {
 
     window.location.href =
-      "http://localhost:3000/gmail-auth";
+      "https://dashboard.render.com/web/srv-d89ht30jo6nc73ds602g/deploys/dep-d89ht30jo6nc73ds6070?r=2026-05-24%4015%3A50%3A40%7E2026-05-24%4015%3A56%3A32";
 
   };
 
