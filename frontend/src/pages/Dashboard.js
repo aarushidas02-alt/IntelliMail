@@ -20,7 +20,7 @@ function Dashboard() {
     try {
 
       const response = await fetch(
-        "http://127.0.0.1:5000/analyze",
+        "https://intellimail-y86b.onrender.com",
         {
           method: "POST",
 

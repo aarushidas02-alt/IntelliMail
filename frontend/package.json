@@ -1,7 +1,9 @@
-{ "main": "electron.js",
+{
+  "main": "electron.js",
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
+
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -15,26 +17,30 @@
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
+
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "electron": "electron .",
-    "dist": "electron-builder"
+    "dist": "npm run build && electron-builder"
   },
+
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
     ]
   },
+
   "browserslist": {
     "production": [
       ">0.2%",
       "not dead",
       "not op_mini all"
     ],
+
     "development": [
       "last 1 chrome version",
       "last 1 firefox version",
@@ -43,13 +49,37 @@
   },
 
   "build": {
-  "appId": "com.intellimail.app",
-  "productName": "IntelliMail",
-  "linux": {
-    "target": "AppImage"
+    "extends": null,
+
+    "appId": "com.intellimail.app",
+    "productName": "IntelliMail",
+
+    "files": [
+      "build/**/*",
+      "electron.js",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+
+    "directories": {
+      "buildResources": "assets"
+    },
+
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "assets/icon.png"
+    },
+
+    "win": {
+      "target": "nsis",
+      "icon": "assets/intellimail.png"
+    }
   },
-  "win": {
-    "target": "nsis"
+
+  "devDependencies": {
+    "electron": "^42.3.0",
+    "electron-builder": "^26.8.1"
   }
-}
 }
